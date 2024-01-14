@@ -28,7 +28,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Create the final image
-FROM nginx:1.25.3
+FROM nginx:1.20
 
 # Set the working directory within the container
 WORKDIR /app
@@ -47,4 +47,4 @@ CMD ["nginx", "-g", "daemon off;"]
 
 Firstly we build an image with the default Dockerfile with the tag `react-app:` and then we build the image with the multi-stage Dockerfile with the tag `react-app-multi-stage:`. We can see that the image without the multi-stage build is 1.7GB and the image with the multi-stage build is 200MB. 
 
-<img width="995" alt="Screenshot 2024-01-14 at 12 14 56 PM" src="https://github.com/Pradumnasaraf/blog-react-app/assets/51878265/03069954-d844-437b-ba7c-189706dc0351">
+<img width="1512" alt="Screenshot 2024-01-14 at 7 20 54 PM" src="https://github.com/Pradumnasaraf/blog-react-app/assets/51878265/0aa02a8f-6f1e-445d-a093-34758c01f67e">
