@@ -1,70 +1,50 @@
-# Getting Started with Create React App
+## React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is basic React application display "Hello World" on the screen. This application is used in the Docker Blog to demonstrate to improve the security of Docker images of a Node.js application.
 
-## Available Scripts
+#### Multi-Stage Build
 
-In the project directory, you can run:
+Multistage builds offer a great way to streamline Docker images, making them smaller and more secure. We have taken our [Dockerfile](/Dockerfile) and improved it by using a multi-stage build. This allows us increase the security of our image by removing the build dependencies from the final image. The final image is now much smaller and only contains the files needed to run the application. The image size has been reduced from 1.7GB to 200MB.
 
-### `npm start`
+Here is the new Dockerfile with the multi-stage build:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```Dockerfile
+# Stage 1: Build the application
+FROM node:21.5-alpine3.18 AS builder
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+# Set the working directory for the build stage
+WORKDIR /app
 
-### `npm test`
+# Copy package.json and package-lock.json
+COPY package*.json ./
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# Install dependencies
+RUN npm install
 
-### `npm run build`
+# Copy the application source code into the container
+COPY . .
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# Build the application
+RUN npm run build
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Stage 2: Create the final image
+FROM nginx:1.25.3
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Set the working directory within the container
+WORKDIR /app
 
-### `npm run eject`
+# Copy the built application files from the builder stage to the nginx html directory
+COPY --from=builder /app/build /usr/share/nginx/html
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# Expose port 80 for the web server
+EXPOSE 80
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# Start nginx in the foreground
+CMD ["nginx", "-g", "daemon off;"]
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+**Result:**
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Firstly we build an image with the default Dockerfile with the tag `react-app:` and then we build the image with the multi-stage Dockerfile with the tag `react-app-multi-stage:`. We can see that the image without the multi-stage build is 1.7GB and the image with the multi-stage build is 200MB. 
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+<img width="995" alt="Screenshot 2024-01-14 at 12 14 56 PM" src="https://github.com/Pradumnasaraf/blog-react-app/assets/51878265/03069954-d844-437b-ba7c-189706dc0351">
